@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IG Followers Compare</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>INSTAGRAM FOLLOWERS COMPARISON</h1>
+
+    <h3>How to Download the files needed from Instagram</h3>
+    <ol>
+        <li>Go to <a href="https://www.instagram.com" target="_blank">instagram.com</a> and log in to your account.</li>
+        <li>Go to <strong>Settings &gt; Accounts Center &gt; Your Information &gt; Download Your Information</strong>.</li>
+        <li>Select the <strong>HTML</strong> format, choose the data you want to download (search for followers), and send the request.</li>
+        <li>When you receive the email from Meta, download the ZIP file and open it.</li>
+        <li>Inside you will find the folders <strong>connections &gt; followers_and_following</strong>.</li>
+        <li>Upload the files <strong>followers_1.html</strong> and <strong>following.html</strong> on this page to compare the data.</li>
+    </ol>
+
+    <label>Following List (.html):</label>
+    <input type="file" id="fileFollowing" accept=".html">
+
+    <label>Followers List (.html):</label>
+    <input type="file" id="fileFollowers" accept=".html">
+
+    <button onclick="compareLists()">COMPARE LIST</button>
+
+    <div class="results">
+      <div class="column">
+        <h3>Not Following You Back</h3>
+        <ul id="onlyFollowing"></ul>
+      </div>
+      <div class="column">
+        <h3>You Don't Follow</h3>
+        <ul id="onlyFollowers"></ul>
+      </div>
+      <div class="column">
+        <h3>In Both Lists</h3>
+        <ul id="inBoth"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    function toggleHowTo() {
+      const howToBox = document.getElementById("howToBox");
+      howToBox.style.display = howToBox.style.display === "none" ? "block" : "none";
+    }
+
+    function parseHTMLUsernames(htmlText) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+      const anchors = doc.querySelectorAll('a');
+      return Array.from(anchors).map(a => a.textContent.trim()).filter(Boolean);
+    }
+
+    function readFile(fileInput) {
+      return new Promise((resolve, reject) => {
+        const file = fileInput.files[0];
+        if (!file) return resolve([]);
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const usernames = parseHTMLUsernames(reader.result);
+          resolve(usernames);
+        };
+        reader.onerror = reject;
+        reader.readAsText(file);
+      });
+    }
+
+    async function compareLists() {
+      const fileFollowing = document.getElementById("fileFollowing");
+      const fileFollowers = document.getElementById("fileFollowers");
+
+      const followingList = await readFile(fileFollowing);
+      const followersList = await readFile(fileFollowers);
+
+      const onlyFollowing = followingList.filter(u => !followersList.includes(u));
+      const onlyFollowers = followersList.filter(u => !followingList.includes(u));
+      const inBoth = followingList.filter(u => followersList.includes(u));
+
+      const listToHTML = arr => arr.map(u => `<li><a href='https://instagram.com/${u}' target='_blank'>${u}</a></li>`).join('');
+
+      document.getElementById("onlyFollowing").innerHTML = listToHTML(onlyFollowing);
+      document.getElementById("onlyFollowers").innerHTML = listToHTML(onlyFollowers);
+      document.getElementById("inBoth").innerHTML = listToHTML(inBoth);
+    }
+  </script>
+</body>
+</html>
